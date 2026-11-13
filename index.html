@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Governance Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="proto-banner">PROTOTYPE · illustrative data for a fictional 935-person company · APM take-home</div>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark">AI</div>
+        <div>AI Governance<small>Acme Corp · Finance &amp; IT view</small></div>
+      </div>
+      <nav class="tabs" role="tablist" aria-label="Sections">
+        <button class="tab" role="tab" data-view="dashboard">1 · Dashboard</button>
+        <button class="tab" role="tab" data-view="sources">2 · Data sources</button>
+        <button class="tab" role="tab" data-view="charts">3 · Why these 3 charts</button>
+      </nav>
+      <button class="theme-btn" id="theme" type="button">☾ Dark</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- =========================================================
+         PART 1 — DASHBOARD
+         ========================================================= -->
+    <section class="view" id="dashboard" aria-label="Dashboard">
+      <div class="filters">
+        <h1>AI usage &amp; spend limits<span>Are we inside our AI budget, who is using what, and what should we do about it?</span></h1>
+        <span class="pill">Period <b id="period"></b></span>
+        <label class="control">Department <select id="dept"></select></label>
+      </div>
+
+      <div class="kpis" id="kpis"></div>
+
+      <div class="grid">
+        <!-- Chart 1 -->
+        <article class="card span-8">
+          <div class="card-head">
+            <span class="chart-tag">Chart 1</span>
+            <div>
+              <h2>Spend vs. limit, by tool</h2>
+              <p>Which tools are over, or about to go over, their monthly limit?</p>
+            </div>
+          </div>
+          <div class="legend">
+            <span><i class="sw" style="background:var(--series-1)"></i>Spent so far (MTD)</span>
+            <span><i class="sw" style="background:var(--series-1-soft)"></i>Projected rest of month</span>
+            <span><i class="sw-tick"></i>Monthly limit</span>
+          </div>
+          <div class="chart" id="chart-limits"></div>
+          <div class="insight" id="insight-limits"></div>
+        </article>
+
+        <!-- Attention list -->
+        <aside class="card span-4">
+          <div class="card-head">
+            <div>
+              <h2>Needs attention <span class="muted" id="alert-count"></span></h2>
+              <p>Generated from the rules behind the charts. Each item has an owner action.</p>
+            </div>
+          </div>
+          <ul class="alerts" id="alerts"></ul>
+        </aside>
+
+        <!-- Chart 2 -->
+        <article class="card span-5">
+          <div class="card-head">
+            <span class="chart-tag">Chart 2</span>
+            <div>
+              <h2>Cumulative spend vs. budget</h2>
+              <p>Will we stay inside the budget this month, and when would we cross it?</p>
+            </div>
+          </div>
+          <div class="legend">
+            <span><i class="sw-line" style="border-color:var(--series-1)"></i>Actual</span>
+            <span><i class="sw-line" style="border-color:var(--series-1);border-top-style:dashed"></i>Forecast (current run rate)</span>
+            <span><i class="sw-line" style="border-color:var(--ink)"></i>Budget</span>
+            <span><i class="sw-line" style="border-color:var(--muted);border-top-style:dotted"></i>Even pace</span>
+          </div>
+          <div class="chart" id="chart-burn"></div>
+          <div class="insight" id="insight-burn"></div>
+        </article>
+
+        <!-- Chart 3 -->
+        <article class="card span-7">
+          <div class="card-head">
+            <span class="chart-tag">Chart 3</span>
+            <div>
+              <h2>Who uses what: department × tool</h2>
+              <p>Active users in the last 30 days. Color = share of the department's headcount.</p>
+            </div>
+          </div>
+          <div class="legend">
+            <span class="seq-legend">
+              <span>% of dept</span>
+              <i style="background:var(--seq-1)"></i><i style="background:var(--seq-2)"></i><i style="background:var(--seq-3)"></i><i style="background:var(--seq-4)"></i><i style="background:var(--seq-5)"></i>
+              <span>&lt;10 · 10–25 · 25–50 · 50–75 · 75%+</span>
+            </span>
+          </div>
+          <div class="chart" id="chart-heat"></div>
+          <div class="insight" id="insight-heat"></div>
+        </article>
+
+        <!-- Inventory -->
+        <article class="card span-12">
+          <div class="card-head">
+            <div>
+              <h2>AI tool inventory</h2>
+              <p>The detail behind the charts. Every row shows where its numbers come from and how fresh they are.</p>
+            </div>
+          </div>
+          <div class="table-wrap"><table class="data" id="inventory"></table></div>
+        </article>
+      </div>
+
+      <p class="footnote">
+        Projections: seat and expensed tools accrue evenly through the month; metered APIs extend the current daily growth rate.
+        With a department selected, tool limits are that department's pro-rata share. All numbers are illustrative.
+      </p>
+    </section>
+
+    <!-- =========================================================
+         PART 2 — DATA SOURCES
+         ========================================================= -->
+    <section class="view doc" id="sources" hidden aria-label="Data sources">
+      <h1>Part 2: API &amp; data source plan</h1>
+      <p class="lede">
+        No single source sees all AI usage. Vendor APIs are precise but only cover tools we already pay for.
+        Shadow AI shows up somewhere else: in expense reports, SSO and OAuth logs, and network traffic.
+        The plan is to combine four kinds of signal and join them on <b>employee email</b>, with the HRIS as the source of truth for people.
+      </p>
+
+      <div class="flow">
+        <div class="step"><h4>1 · Collect</h4><p>Vendor admin APIs, IdP logs, expense/card feeds, HRIS, network/CASB.</p></div>
+        <div class="step"><h4>2 · Normalize</h4><p>Map merchants and domains to a catalog of AI tools; de-duplicate people by email; attach department from HRIS.</p></div>
+        <div class="step"><h4>3 · Compute</h4><p>MTD spend, run-rate forecast, % of limit, seat utilization, approved vs. unapproved.</p></div>
+        <div class="step"><h4>4 · Act</h4><p>Alerts to Slack/email, seat reclaim, API spend caps, approval workflow for new tools.</p></div>
+      </div>
+
+      <h2>Can we get consumption data from ChatGPT, Claude, Copilot and Midjourney?</h2>
+      <div class="card">
+        <p style="margin-top:0">Mostly yes, but <b>only for company-managed accounts</b>. The answer depends on how the tool is bought:</p>
+        <ul>
+          <li><b>Metered APIs (OpenAI API, Anthropic API): yes, precisely.</b> Both offer admin usage and cost endpoints that return tokens and dollars by model, project/workspace and API key. They need an org admin key.</li>
+          <li><b>Seat products (ChatGPT Enterprise, Claude Team/Enterprise, GitHub Copilot, M365 Copilot, Gemini): partly.</b> We can get seat assignments, active users and last-activity dates, so utilization is available. Cost per seat comes from the contract, not the API. How much detail you get depends on the plan; most of it requires Enterprise tiers.</li>
+          <li><b>Midjourney and any personal account (ChatGPT Plus, Claude Pro, etc.): no vendor API.</b> These are the shadow-AI cases, and they're exactly what vendor APIs can't see. We find them through expense/card data (spend), SSO/OAuth grants (who signed in), and CASB or a browser extension (free-tier use).</li>
+        </ul>
+        <p class="sub" style="margin-bottom:0">Endpoint names and plan requirements change often. Confirm each against the vendor's current docs during scoping.</p>
+      </div>
+
+      <h2>A · Vendor admin APIs: usage and cost for sanctioned tools</h2>
+      <div class="card table-wrap">
+        <table class="data">
+          <thead><tr><th>Tool</th><th>Source</th><th>What it gives us</th><th>Freshness</th><th>Gap / caveat</th></tr></thead>
+          <tbody>
+            <tr><td><b>OpenAI API</b></td><td>Admin API: Usage API + Costs API</td><td>Tokens and requests by model, project and key; daily $ cost</td><td>Hourly–daily</td><td>Usage is per API key/project; needs key-to-team mapping</td></tr>
+            <tr><td><b>ChatGPT Enterprise</b></td><td>Workspace admin (user list, analytics) + Compliance API</td><td>Seats, active users, activity per user</td><td>Daily</td><td>No per-user $; cost = seats × contract price</td></tr>
+            <tr><td><b>Anthropic API</b></td><td>Admin API: Usage &amp; Cost reports</td><td>Tokens by model, workspace and key; $ cost</td><td>Hourly–daily</td><td>Same key-to-team mapping issue</td></tr>
+            <tr><td><b>Claude Team / Enterprise</b></td><td>Admin console members + analytics (Enterprise APIs)</td><td>Seats, active users</td><td>Daily</td><td>Detail varies by plan; cost from contract</td></tr>
+            <tr><td><b>GitHub Copilot</b></td><td>Copilot user management + metrics APIs</td><td>Seat assignments, <code>last_activity_at</code>, engagement by team</td><td>Daily</td><td>Metrics need a minimum number of active users per team</td></tr>
+            <tr><td><b>Microsoft 365 Copilot</b></td><td>Microsoft Graph: Copilot usage reports + license (SKU) data</td><td>Licensed vs. active users, last activity per app</td><td>24–48 h lag</td><td>Reports may be anonymized unless an admin turns that off</td></tr>
+            <tr><td><b>Gemini for Workspace</b></td><td>Google Admin SDK: Reports API + License Manager</td><td>Licenses, Gemini activity events</td><td>Daily</td><td>Coverage of activity events varies</td></tr>
+            <tr><td><b>Midjourney &amp; consumer AI apps</b></td><td>None</td><td>n/a</td><td>n/a</td><td>Covered by sources B–D below</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>B · Discovery and context sources</h2>
+      <div class="card table-wrap">
+        <table class="data">
+          <thead><tr><th>Priority</th><th>Source</th><th>Examples</th><th>Answers</th></tr></thead>
+          <tbody>
+            <tr><td><span class="tag p0">MVP</span></td><td><b>Identity / SSO logs</b></td><td>Okta System Log API, Microsoft Entra sign-in logs (Graph), Google Workspace login audit</td><td>Who signed in to which AI app, and when. Drives seat utilization and "inactive 30d".</td></tr>
+            <tr><td><span class="tag p0">MVP</span></td><td><b>OAuth app grants</b></td><td>Google Workspace Token API, Entra OAuth consent grants</td><td>"Sign in with Google" to AI apps, plus the scopes granted (e.g., a notetaker reading every calendar). Cheapest shadow-AI signal.</td></tr>
+            <tr><td><span class="tag p0">MVP</span></td><td><b>Expense &amp; corporate cards</b></td><td>Ramp, Brex, Expensify, Navan, card feeds</td><td>Who pays for which AI tool out of pocket or on a card. This is where shadow-AI spend shows up.</td></tr>
+            <tr><td><span class="tag p0">MVP</span></td><td><b>HRIS</b></td><td>Workday, Rippling, BambooHR, HiBob</td><td>Department, manager, headcount, leavers (seats to reclaim).</td></tr>
+            <tr><td><span class="tag p0">MVP</span></td><td><b>Contracts &amp; budgets</b></td><td>Contract repository / SaaS management catalog; limits set in-app by Finance</td><td>Seat price, committed seats, renewal date, monthly limit per tool and per department.</td></tr>
+            <tr><td><span class="tag">Phase 2</span></td><td><b>AP / ERP / procurement</b></td><td>NetSuite, Coupa, SAP, QuickBooks</td><td>Invoices and POs. Reconciles accrued spend with what was actually billed.</td></tr>
+            <tr><td><span class="tag">Phase 3</span></td><td><b>Network / endpoint</b></td><td>CASB/SSE (Netskope, Zscaler), DNS logs, MDM, browser extension</td><td>Free-tier and personal-account use that has no spend and no SSO. Needs the security team on board.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Sequencing</h2>
+      <div class="card">
+        <ol style="margin:0;padding-left:20px">
+          <li><b>MVP (≈ 4–6 weeks):</b> SSO + expense/card + HRIS + OpenAI/Anthropic cost APIs + limits entered by Finance. This covers sanctioned spend, utilization and most paid shadow AI.</li>
+          <li><b>Phase 2:</b> Copilot / M365 / Gemini usage APIs for deeper utilization, OAuth-grant risk scoring, ERP reconciliation.</li>
+          <li><b>Phase 3:</b> CASB / browser-extension discovery for free-tier use; push enforcement (API spend caps, auto-reclaim of inactive seats).</li>
+        </ol>
+      </div>
+
+      <h2>Open questions and risks</h2>
+      <div class="card">
+        <ul style="margin:0;padding-left:20px">
+          <li><b>Privacy:</b> collect metadata (who, which tool, how much), never prompt content. This needs sign-off from legal and works councils in the EU.</li>
+          <li><b>Identity matching:</b> personal emails on expense reports and shared API keys break the email join. We need a key-to-owner mapping and fuzzy merchant matching.</li>
+          <li><b>Plan-gated APIs:</b> the best usage data needs Enterprise tiers. Smaller customers will rely more on SSO and expense data.</li>
+          <li><b>Freshness mismatch:</b> APIs are hourly, M365 reports lag 1–2 days, expenses lag by weeks. Show "synced X ago" on every number (as the inventory table does).</li>
+          <li><b>Accrual vs. invoice:</b> the CFO reconciles to invoices. Forecasts are accrual-based and need to be labeled that way.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         PART 3 — THREE CHARTS
+         ========================================================= -->
+    <section class="view doc" id="charts" hidden aria-label="Why these three charts">
+      <h1>Part 3: If I could only show three charts</h1>
+      <p class="lede">
+        A CFO or IT/security lead has three questions: <b>Are we over a limit?</b> <b>Will we be by month end?</b>
+        <b>Who is using what, and is it approved?</b> Each chart answers one of them and can be read in under ten seconds.
+        The KPI tiles and the "Needs attention" list aren't charts. They're the headline and the to-do list.
+      </p>
+
+      <div class="card pick">
+        <div class="num">1</div>
+        <div>
+          <h3>Spend vs. limit, by tool (bullet chart)</h3>
+          <p>One row per tool: solid bar = spent so far, lighter bar = projected rest of month, black tick = limit. Sorted by risk, with unapproved tools grouped at the bottom.</p>
+          <dl>
+            <dt>Question it answers</dt><dd>Which tools are over, or about to go over, their limit?</dd>
+            <dt>Why this one</dt><dd>It's the most direct picture of "spend limits". Actual, forecast and limit sit on one line, so you don't have to do math. Putting shadow tools on the same axis with <i>no</i> limit tick makes shadow AI a budget problem the CFO feels, not just a security issue.</dd>
+            <dt>Who acts on it</dt><dd>CFO / FP&amp;A, and the owner of each tool.</dd>
+            <dt>Rejected alternative</dt><dd>Pie or donut of spend by tool. It shows share of spend but not position against the limit, which is the actual question.</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="card pick">
+        <div class="num">2</div>
+        <div>
+          <h3>Cumulative spend vs. budget, with forecast (burn-up line)</h3>
+          <p>Actual cumulative spend to today, a dashed forecast to month end, the budget line, and a dotted even-pace guide.</p>
+          <dl>
+            <dt>Question it answers</dt><dd>Will we stay inside the budget this month, and when would we cross it?</dd>
+            <dt>Why this one</dt><dd>Limits are bounded in time. A month-to-date number on its own can mislead: "40% spent on day 13" sounds fine until you see that metered API usage is accelerating. The slope against the even-pace line shows that right away and tells you <i>when</i> to step in.</dd>
+            <dt>Who acts on it</dt><dd>CFO / FP&amp;A, and department heads when filtered.</dd>
+            <dt>Rejected alternative</dt><dd>Monthly spend bars. They're lagging and only tell you after the money is spent.</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="card pick">
+        <div class="num">3</div>
+        <div>
+          <h3>Department × tool adoption (heatmap)</h3>
+          <p>Rows are departments and columns are tools, split into approved and unapproved. Each cell shows active users, shaded by share of that department's headcount.</p>
+          <dl>
+            <dt>Question it answers</dt><dd>Who is using what, and where is shadow AI concentrated?</dd>
+            <dt>Why this one</dt><dd>It covers the "usage" half of the brief in one view. Security spots risky clusters (Sales on Otter.ai recording customer calls). Finance spots duplication (personal ChatGPT Plus next to paid Enterprise seats). Enablement spots gaps (low adoption in Legal). Normalizing by headcount keeps small teams visible.</dd>
+            <dt>Who acts on it</dt><dd>IT / security lead, plus Finance for consolidation.</dd>
+            <dt>Rejected alternative</dt><dd>Active users over time. Nice to know, but it doesn't say which team or which tool to act on.</dd>
+          </dl>
+        </div>
+      </div>
+
+      <h2>What I deliberately left out</h2>
+      <div class="card callout">
+        <ul style="margin:0;padding-left:20px">
+          <li><b>Token counts:</b> meaningless to a CFO. Translate to dollars.</li>
+          <li><b>Per-employee leaderboards:</b> they feel like surveillance and hurt adoption. Department level is enough to act on.</li>
+          <li><b>Opaque "risk scores":</b> a number without the reason behind it can't be acted on. The heatmap and the alert text explain the risk instead.</li>
+          <li><b>Dual-axis spend + users charts:</b> they invite false correlations. Spend and usage stay on separate charts.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <div class="tooltip" id="tooltip" role="tooltip"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
